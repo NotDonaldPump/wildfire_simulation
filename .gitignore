@@ -1,0 +1,40 @@
+# === Scala & sbt ===
+**/target/
+**/.bloop/
+**/.metals/
+**/.vscode/
+**/.idea/
+**/.classpath
+**/.project
+**/.settings
+**/.cache
+**/.history
+**/.ammonite/
+
+# === sbt build metadata ===
+**/project/target/
+**/project/project/
+
+# === Metals/VSCode specific ===
+.metals/
+.vscode/
+
+# === OS-specific ===
+.DS_Store
+Thumbs.db
+
+# === Logs & temporary files ===
+*.log
+*.tmp
+
+# === Python cache ===
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# === Python virtualenv (if you use one) ===
+.venv/
+venv/
+ENV/
+env/

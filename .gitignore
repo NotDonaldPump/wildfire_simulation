@@ -32,9 +32,3 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
-
-# === Python virtualenv (if you use one) ===
-.venv/
-venv/
-ENV/
-env/

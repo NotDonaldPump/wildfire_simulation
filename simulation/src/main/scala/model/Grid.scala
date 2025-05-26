@@ -1,6 +1,7 @@
 package model
 
-import ujson.*
+import io.circe.Json
+import io.circe.syntax._
 
 final case class Grid(cells: Vector[Vector[Cell]], conditions: Condition) {
   // main method called by the simulation to update the grid every tick
@@ -8,6 +9,19 @@ final case class Grid(cells: Vector[Vector[Cell]], conditions: Condition) {
     val newCells = cells.map { (row: Vector[Cell]) =>
       row.map { (cell: Cell) =>
         cell.updateCell(this)
+      }
+    }
+    Grid(newCells, conditions)
+  }
+
+  def triggerFire(x: Int, y: Int): Grid = {
+    val newCells = cells.map { (row: Vector[Cell]) =>
+      row.map { (cell: Cell) =>
+        if (cell.x == x && cell.y == y) {
+          cell.triggerCell
+        } else {
+          cell
+        }
       }
     }
     Grid(newCells, conditions)
@@ -37,15 +51,15 @@ object Grid {
 
   // tx mon frère chatgpt, i hope it works
   // Converts the grid to a JSON object for the frontend
-  def gridToJson(grid: Grid): ujson.Value = {
-      val cellsJson = grid.cells.flatten.map { cell =>
-      Obj(
-          "x" -> cell.x,
-          "y" -> cell.y,
-          "type" -> cell.cellType.toString,
-          "state" -> cell.state.toString
+  def gridToJson(grid: Grid): Json = {
+    val cellsJson = grid.cells.flatten.map { cell =>
+      Json.obj(
+        "x"     -> Json.fromInt(cell.x),
+        "y"     -> Json.fromInt(cell.y),
+        "type"  -> Json.fromString(cell.cellType.toString),
+        "state" -> Json.fromString(cell.state.toString)
       )
-      }
-      Obj("cells" -> Arr(cellsJson*))
+    }
+    Json.obj("cells" -> Json.fromValues(cellsJson))
   }
 }

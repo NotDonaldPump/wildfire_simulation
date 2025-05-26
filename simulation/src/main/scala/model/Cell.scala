@@ -1,6 +1,8 @@
 package model
 
 final case class Cell private(x: Int, y: Int, cellType: Type, state: State, burnSince: Int = 0) {
+    def triggerCell: Cell = Cell(this.x, this.y, this.cellType, Burning, 1)
+
     // main method called by the grid to update the cell
     def updateCell(grid: Grid): Cell = this.cellType.match {
         case Water => this

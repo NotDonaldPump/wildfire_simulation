@@ -2,6 +2,7 @@ package model
 
 import io.circe.Json
 import io.circe.syntax._
+import simulation.GridStats
 
 final case class Grid(cells: Vector[Vector[Cell]], conditions: Condition) {
   // main method called by the simulation to update the grid every tick
@@ -25,6 +26,16 @@ final case class Grid(cells: Vector[Vector[Cell]], conditions: Condition) {
       }
     }
     Grid(newCells, conditions)
+  }
+
+  def getStats(timeStamp: Int): GridStats = {
+    val (burning, burned, unburned) = cells.flatten.foldLeft((0, 0, 0)) {
+      case ((b, d, u), cell) => cell.state match
+        case Burning  => (b + 1, d, u)
+        case Burned   => (b, d + 1, u)
+        case Unburned => (b, d, u + 1)
+    }
+    GridStats(burning, burned, unburned, this.conditions.humidity, this.conditions.temperature, timeStamp)
   }
 }
 

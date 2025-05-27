@@ -33,12 +33,32 @@ final case class Cell private(x: Int, y: Int, cellType: Type, state: State, burn
                 y <- this.y - 3 to this.y + 3
                 if grid.cells(x)(y) == Water
             } yield true).length - firstDegreeNeig - secondDegreeNeig
-            grid.conditions.humidity + 1.0 * firstDegreeNeig + 0.5 * secondDegreeNeig + 0.25 * thirdDegreeNeig // ajuster les coefficients
+            grid.conditions.humidity + 1.0 * firstDegreeNeig + 0.5 * secondDegreeNeig + 0.25 * thirdDegreeNeig // ajuster les coefficients (normaliser à 1)
         }
     }
 
     def burnableStuffCheck(grid: Grid): Boolean = {
-        true // todo : implement this (Most important part of the simulation)
+        val windOffset = grid.conditions.getWindOffset
+        val tempMin = -10.0
+        val tempMax = 50.0
+        val normalizedTemp = ((grid.conditions.temperature - tempMin) / (tempMax - tempMin)).max(0.0).min(1.0)
+        val offsets = List((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1))
+        val totalProb = for {
+            (dx, dy) <- offsets
+            if (grid.cells(this.x + dx)(this.y + dy).state == Burning)
+        } yield {
+            if (dx == windOffset._1 && dy == windOffset._2) {
+                (normalizedTemp * 0.3 + grid.cells(this.x + dx)(this.y + dy).cellType.spreadModifier * 0.35 + grid.conditions.humidity * 0.35) * 2 * grid.conditions.wind.strength
+            }
+            else {
+                normalizedTemp * 0.3 + grid.cells(this.x + dx)(this.y + dy).cellType.spreadModifier * 0.35 + grid.conditions.humidity * 0.35
+            }
+        }
+        if totalProb.sum / (offsets.length + 1) > this.cellType.ignitionThreshold then {
+            true
+        } else {
+            false
+        }
     }
 
     def shouldIStartBurning(grid: Grid): Boolean = this.cellType match {

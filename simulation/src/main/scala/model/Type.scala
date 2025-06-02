@@ -10,19 +10,19 @@ sealed trait Type {
 
 case object Grass extends Type {
   val burnDuration: Int = 5
-  val ignitionThreshold: Double = 0.3
+  val ignitionThreshold: Double = 0.5
   val spreadModifier: Double = 0.3
 }
 
 case object Oak extends Type {
   val burnDuration: Int = 10
-  val ignitionThreshold: Double = 0.7
+  val ignitionThreshold: Double = 0.4
   val spreadModifier: Double = 0.7
 }
 
 case object Pine extends Type {
   val burnDuration: Int = 8
-  val ignitionThreshold: Double = 0.4
+  val ignitionThreshold: Double = 0.2
   val spreadModifier: Double = 0.9
 }
 

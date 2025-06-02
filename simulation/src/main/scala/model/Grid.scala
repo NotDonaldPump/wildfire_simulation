@@ -18,7 +18,8 @@ final case class Grid(cells: Vector[Vector[Cell]], conditions: Condition) {
   def triggerFire(x: Int, y: Int): Grid = {
     val newCells = cells.map { (row: Vector[Cell]) =>
       row.map { (cell: Cell) =>
-        if (cell.x == x && cell.y == y) {
+        if (cell.x == x && cell.y == y || cell.x == x + 1 && cell.y == y + 1
+        || cell.x == x - 1 && cell.y == y - 1) {
           cell.triggerCell
         } else {
           cell
@@ -72,5 +73,46 @@ object Grid {
       )
     }
     Json.obj("cells" -> Json.fromValues(cellsJson))
+  }
+
+  def jsonToGrid(json: Json, defaultCondition: Condition = Condition.default): Grid = {
+    val cellsArray = json.hcursor.downField("cells").as[List[Json]].getOrElse(Nil)
+
+    val parsedCells = cellsArray.flatMap { cellJson =>
+      val cursor = cellJson.hcursor
+      for {
+        x     <- cursor.get[Int]("x").toOption
+        y     <- cursor.get[Int]("y").toOption
+        tStr  <- cursor.get[String]("type").toOption
+        sStr  <- cursor.get[String]("state").toOption
+        cellType <- stringToType(tStr)
+        state    <- stringToState(sStr)
+      } yield Cell(x, y, cellType, state)
+    }
+
+    // Reconstituer la matrice 2D depuis la liste plate
+    val byY = parsedCells.groupBy(_.y).toVector.sortBy(_._1).map(_._2)
+    val rows: Vector[Vector[Cell]] = byY.map { rowCells =>
+      rowCells.sortBy(_.x).toVector
+    }
+
+    Grid(rows, defaultCondition)
+  }
+
+  // Helpers pour convertir string en Type et State
+  def stringToType(s: String): Option[Type] = s match {
+    case "Grass" => Some(Grass)
+    case "Oak"   => Some(Oak)
+    case "Pine"  => Some(Pine)
+    case "Water" => Some(Water)
+    case "Rock"  => Some(Rock)
+    case _       => None
+  }
+
+  def stringToState(s: String): Option[State] = s match {
+    case "Unburned" => Some(Unburned)
+    case "Burning"  => Some(Burning)
+    case "Burned"   => Some(Burned)
+    case _          => None
   }
 }

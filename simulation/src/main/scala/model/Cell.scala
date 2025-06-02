@@ -39,27 +39,40 @@ final case class Cell private(x: Int, y: Int, cellType: Type, state: State, burn
 
     def burnableStuffCheck(grid: Grid): Boolean = {
         val windOffset = grid.conditions.getWindOffset
+
         val tempMin = -10.0
         val tempMax = 50.0
-        val normalizedTemp = ((grid.conditions.temperature - tempMin) / (tempMax - tempMin)).max(0.0).min(1.0)
-        val offsets = List((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1))
-        val totalProb = for {
-            (dx, dy) <- offsets
-            if (grid.cells(this.x + dx)(this.y + dy).state == Burning)
+        val normalizedTemp = ((grid.conditions.temperature - tempMin) / (tempMax - tempMin))
+            .max(0.0)
+            .min(1.0)
+
+        val humidity = grid.conditions.humidity
+        val windStrength = grid.conditions.wind.strength
+        val threshold = this.cellType.ignitionThreshold
+
+        val neighborOffsets = List(
+            (-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1),  (1, 0), (1, 1)
+        )
+
+        val ignitionScores = for {
+            (dx, dy) <- neighborOffsets
+            neighbor = grid.cells(this.x + dx)(this.y + dy)
+            if neighbor.state == Burning
         } yield {
-            if (dx == windOffset._1 && dy == windOffset._2) {
-                (normalizedTemp * 0.3 + grid.cells(this.x + dx)(this.y + dy).cellType.spreadModifier * 0.35 + grid.conditions.humidity * 0.35) * 2 * grid.conditions.wind.strength
-            }
-            else {
-                normalizedTemp * 0.3 + grid.cells(this.x + dx)(this.y + dy).cellType.spreadModifier * 0.35 + grid.conditions.humidity * 0.35
-            }
+            val spread = neighbor.cellType.spreadModifier
+            val base = normalizedTemp * 0.3 + spread * 0.35 - humidity * 0.35
+            if ((dx, dy) == windOffset) base * 2 * windStrength else base
         }
-        if totalProb.sum / (offsets.length + 1) > this.cellType.ignitionThreshold then {
-            true
-        } else {
+
+        if ignitionScores.isEmpty then
             false
+
+        else
+            val avgScore = ignitionScores.sum / ignitionScores.length
+            val scale = 10.0
+            val probability = 1.0 / (1.0 + math.exp(-scale * (avgScore - threshold)))
+            scala.util.Random.nextDouble() < probability
         }
-    }
 
     def shouldIStartBurning(grid: Grid): Boolean = this.cellType match {
         case Water => false

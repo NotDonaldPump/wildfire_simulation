@@ -13,17 +13,15 @@ case object SW extends Direction
 case class Wind(direction: Direction, strength: Double)
 
 case class Condition(wind: Wind, humidity: Double, temperature: Double) {
-  def getWindOffset: Tuple2[Int, Int] = {
-    this.wind.direction match {
-      case N  => (0, 1)
-      case S  => (0, -1)
-      case E  => (0, -1)
-      case W  => (0, 1)
-      case NE => (-1, 1)
-      case NW => (1, 1)
-      case SE => (-1, -1)
-      case SW => (1, -1)
-    }
+  def getWindOffset: (Int, Int) = this.wind.direction match {
+    case N  => (0, -1)
+    case S  => (0, 1)
+    case E  => (1, 0)
+    case W  => (-1, 0)
+    case NE => (1, -1)
+    case NW => (-1, -1)
+    case SE => (1, 1)
+    case SW => (-1, 1)
   }
 }
 

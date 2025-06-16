@@ -34,3 +34,7 @@ __pycache__/
 *.pyo
 *.pyd
 **/webapp/static
+
+simulation/results_varying_humidity.txt
+simulation/results_varying_temperature.txt
+simulation/results_varying_wind.txt

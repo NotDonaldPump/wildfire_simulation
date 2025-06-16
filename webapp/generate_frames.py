@@ -65,7 +65,7 @@ def save_simulation_frames(json_array, static_root="./static"):
             else:
                 grid[y][x] = 0
 
-        fig, ax = plt.subplots(figsize=(5, 5))
+        fig, ax = plt.subplots(figsize=(19.2, 10.8), dpi=100)
         ax.imshow(grid, cmap=colormap, vmin=0, vmax=7)
         ax.axis('off')
 

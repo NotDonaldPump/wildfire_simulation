@@ -2,16 +2,16 @@ package model
 
 import io.circe.Json
 import io.circe.syntax._
-import simulation.GridStats
+import scala.collection.parallel.CollectionConverters._
 
 final case class Grid(cells: Vector[Vector[Cell]], conditions: Condition) {
   // main method called by the simulation to update the grid every tick
   def update(): Grid = {
-    val newCells = cells.map { (row: Vector[Cell]) =>
-      row.map { (cell: Cell) =>
+    val newCells = cells.par.map { row =>
+      row.par.map { cell =>
         cell.updateCell(this)
       }
-    }
+    }.map(_.toVector).toVector
     Grid(newCells, conditions)
   }
 
@@ -27,16 +27,6 @@ final case class Grid(cells: Vector[Vector[Cell]], conditions: Condition) {
       }
     }
     Grid(newCells, conditions)
-  }
-
-  def getStats(timeStamp: Int): GridStats = {
-    val (burning, burned, unburned) = cells.flatten.foldLeft((0, 0, 0)) {
-      case ((b, d, u), cell) => cell.state match
-        case Burning  => (b + 1, d, u)
-        case Burned   => (b, d + 1, u)
-        case Unburned => (b, d, u + 1)
-    }
-    GridStats(burning, burned, unburned, this.conditions.humidity, this.conditions.temperature, timeStamp)
   }
 }
 
@@ -61,7 +51,7 @@ object Grid {
     Grid(cells, conditions)
   }
 
-  // tx mon frère chatgpt, i hope it works
+  // tx chatgpt, i hope it works
   // Converts the grid to a JSON object for the frontend
   def gridToJson(grid: Grid): Json = {
     val cellsJson = grid.cells.flatten.map { cell =>

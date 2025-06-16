@@ -46,8 +46,13 @@ final case class Cell private(x: Int, y: Int, cellType: Type, state: State, burn
             .max(0.0)
             .min(1.0)
 
+        val windMin = 0.0
+        val windMax = 60.0
+        val normalizedWind = ((grid.conditions.wind.strength - windMin) / (windMax - windMin))
+            .max(0.0)
+            .min(1.0)
+
         val humidity = grid.conditions.humidity
-        val windStrength = grid.conditions.wind.strength
         val threshold = this.cellType.ignitionThreshold
 
         val neighborOffsets = List(
@@ -56,12 +61,12 @@ final case class Cell private(x: Int, y: Int, cellType: Type, state: State, burn
 
         val ignitionScores = for {
             (dx, dy) <- neighborOffsets
-            neighbor = grid.cells(this.x + dx)(this.y + dy)
+            neighbor = grid.cells(this.y + dy)(this.x + dx)
             if neighbor.state == Burning
         } yield {
             val spread = neighbor.cellType.spreadModifier
             val base = normalizedTemp * 0.3 + spread * 0.35 - humidity * 0.35
-            if ((dx, dy) == windOffset) base * 2 * windStrength else base
+            if ((dx, dy) == windOffset) base * 2 * normalizedWind else base
         }
 
         if ignitionScores.isEmpty then
@@ -69,7 +74,7 @@ final case class Cell private(x: Int, y: Int, cellType: Type, state: State, burn
 
         else
             val avgScore = ignitionScores.sum / ignitionScores.length
-            val scale = 10.0
+            val scale = 15.0
             val probability = 1.0 / (1.0 + math.exp(-scale * (avgScore - threshold)))
             scala.util.Random.nextDouble() < probability
         }
